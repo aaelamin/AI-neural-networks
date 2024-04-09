@@ -47,9 +47,6 @@ class PerceptronModel(object):
         """
         Train the perceptron until convergence.
         """
-<<<<<<< HEAD
-       
-=======
         "*** YOUR CODE HERE ***"
         while True:
             misclassified = False
@@ -62,7 +59,6 @@ class PerceptronModel(object):
             if not misclassified:
                 break
                 
->>>>>>> bfeba22e346bcfea4ae53b0aa4f23f88d72b2da9
 class RegressionModel(object):
     """
     A neural network model for approximating a function that maps from real
@@ -159,8 +155,16 @@ class DigitClassificationModel(object):
     working on this part of the project.)
     """
     def __init__(self):
-        # Initialize your model parameters here
-        "*** YOUR CODE HERE ***"
+        # Input layer to hidden layer
+        self.W1 = nn.Parameter(784, 128)  
+        self.b1 = nn.Parameter(1, 128)
+
+        # Hidden layer to output layer
+        self.W2 = nn.Parameter(128, 10)  
+        self.b2 = nn.Parameter(1, 10)
+
+        # Learning rate
+        self.learning_rate = 0.01
 
     def run(self, x):
         """
@@ -176,7 +180,13 @@ class DigitClassificationModel(object):
             A node with shape (batch_size x 10) containing predicted scores
                 (also called logits)
         """
-        "*** YOUR CODE HERE ***"
+        x = nn.Linear(x, self.W1)
+        x = nn.ReLU(nn.AddBias(x, self.b1))
+        
+        # Output layer
+        x = nn.Linear(x, self.W2)
+        x = nn.AddBias(x, self.b2)
+        return x
 
     def get_loss(self, x, y):
         """
@@ -199,5 +209,22 @@ class DigitClassificationModel(object):
         """
         Trains the model.
         """
-        "*** YOUR CODE HERE ***"
-
+        epochs = 10  
+        batch_size = 20 
+        
+        for epoch in range(1, epochs + 1):
+            total_loss = 0
+            batches = 0
+            
+            for x, y in dataset.iterate_once(batch_size):
+                loss = self.get_loss(x, y)
+                total_loss += nn.as_scalar(loss)
+                batches += 1
+                
+                # Compute gradients and update parameters
+                gradients = nn.gradients([self.W1, self.b1, self.W2, self.b2], loss)
+                self.W1.update(gradients[0], -self.learning_rate)
+                self.b1.update(gradients[1], -self.learning_rate)
+                self.W2.update(gradients[2], -self.learning_rate)
+                self.b2.update(gradients[3], -self.learning_rate)
+       
