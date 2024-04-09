@@ -27,7 +27,8 @@ class PerceptronModel(object):
         Returns: a node containing a single number (the score)
         """
         "*** YOUR CODE HERE ***"
-
+        return nn.DotProduct(self.w, x_point)
+        
     def get_prediction(self, x_point):
         """
         Calculates the predicted class for a single data point `x_point`.
@@ -35,13 +36,29 @@ class PerceptronModel(object):
         Returns: -1 or 1
         """
         "*** YOUR CODE HERE ***"
+        score = nn.DotProduct(self.w, x_point)
+        scalar_score = nn.as_scalar(score)
+        if scalar_score >= 0:
+            return 1
+        else:
+            return -1
 
     def train_model(self, dataset):
         """
         Train the perceptron until convergence.
         """
         "*** YOUR CODE HERE ***"
-
+        while True:
+            misclassified = False
+            for x_point, label in dataset.iterate_once(1):
+                prediction = self.get_prediction(x_point)
+                label = nn.as_scalar(label)
+                if prediction != label:
+                    misclassified = True
+                    self.w.update(label, x_point)
+            if not misclassified:
+                break
+                
 class RegressionModel(object):
     """
     A neural network model for approximating a function that maps from real
