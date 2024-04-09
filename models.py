@@ -156,15 +156,19 @@ class DigitClassificationModel(object):
     """
     def __init__(self):
         # Input layer to hidden layer
-        self.W1 = nn.Parameter(784, 128)  
-        self.b1 = nn.Parameter(1, 128)
+        self.W1 = nn.Parameter(784, 256)  
+        self.b1 = nn.Parameter(1, 256)
 
         # Hidden layer to output layer
-        self.W2 = nn.Parameter(128, 10)  
-        self.b2 = nn.Parameter(1, 10)
+        self.W2 = nn.Parameter(256, 128)  
+        self.b2 = nn.Parameter(1, 128)
+
+        self.W3 = nn.Parameter(128, 10)
+        self.b3 = nn.Parameter(1, 10)
 
         # Learning rate
-        self.learning_rate = 0.01
+        self.learning_rate = 0.02
+
 
     def run(self, x):
         """
@@ -182,10 +186,10 @@ class DigitClassificationModel(object):
         """
         x = nn.Linear(x, self.W1)
         x = nn.ReLU(nn.AddBias(x, self.b1))
-        
-        # Output layer
         x = nn.Linear(x, self.W2)
-        x = nn.AddBias(x, self.b2)
+        x = nn.ReLU(nn.AddBias(x, self.b2))
+        x = nn.Linear(x, self.W3)
+        x = nn.AddBias(x, self.b3)
         return x
 
     def get_loss(self, x, y):
@@ -209,22 +213,20 @@ class DigitClassificationModel(object):
         """
         Trains the model.
         """
-        epochs = 10  
-        batch_size = 20 
-        
-        for epoch in range(1, epochs + 1):
-            total_loss = 0
-            batches = 0
-            
-            for x, y in dataset.iterate_once(batch_size):
+        Accurate = False
+        epoch_num = 0
+        while not Accurate:
+            epoch_num += 1
+            for x, y in dataset.iterate_once(50):
                 loss = self.get_loss(x, y)
-                total_loss += nn.as_scalar(loss)
-                batches += 1
-                
-                # Compute gradients and update parameters
-                gradients = nn.gradients([self.W1, self.b1, self.W2, self.b2], loss)
-                self.W1.update(gradients[0], -self.learning_rate)
-                self.b1.update(gradients[1], -self.learning_rate)
-                self.W2.update(gradients[2], -self.learning_rate)
-                self.b2.update(gradients[3], -self.learning_rate)
+                g_W1,g_b1,g_W2,g_b2,g_W3,g_b3 = nn.gradients([self.W1,self.b1,self.W2,self.b2,self.W3,self.b3], loss)
+                self.W1.update(-self.learning_rate, g_W1)
+                self.b1.update(-self.learning_rate, g_b1)
+                self.W2.update(-self.learning_rate, g_W2)
+                self.b2.update(-self.learning_rate, g_b2)
+                self.W3.update(-self.learning_rate, g_W3)
+                self.b3.update(-self.learning_rate, g_b3)
+            if(dataset.get_validation_accuracy() > 0.975):
+                Accurate = True
+        print("Epoch: " + str(epoch_num))
        
