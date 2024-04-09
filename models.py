@@ -40,8 +40,7 @@ class PerceptronModel(object):
         """
         Train the perceptron until convergence.
         """
-        "*** YOUR CODE HERE ***"
-
+       
 class RegressionModel(object):
     """
     A neural network model for approximating a function that maps from real
@@ -49,8 +48,13 @@ class RegressionModel(object):
     to approximate sin(x) on the interval [-2pi, 2pi] to reasonable precision.
     """
     def __init__(self):
-        # Initialize your model parameters here
-        "*** YOUR CODE HERE ***"
+        
+        self.W1 = nn.Parameter(1, 20)
+        self.b1 = nn.Parameter(1, 20)
+        
+        self.W2 = nn.Parameter(20, 1)
+        self.b2 = nn.Parameter(1, 1)
+
 
     def run(self, x):
         """
@@ -60,8 +64,18 @@ class RegressionModel(object):
             x: a node with shape (batch_size x 1)
         Returns:
             A node with shape (batch_size x 1) containing predicted y-values
-        """
-        "*** YOUR CODE HERE ***"
+        """\
+        # first layer
+        x = nn.Linear(x, self.W1)
+        x = nn.AddBias(x, self.b1)
+        x = nn.ReLU(x)
+        
+        # Second layer
+        x = nn.Linear(x, self.W2)
+        x = nn.AddBias(x, self.b2)
+        
+        return x
+
 
     def get_loss(self, x, y):
         """
@@ -73,13 +87,40 @@ class RegressionModel(object):
                 to be used for training
         Returns: a loss node
         """
-        "*** YOUR CODE HERE ***"
+        predictions = self.run(x)
+        loss = nn.SquareLoss(predictions, y)
+        return loss
 
     def train_model(self, dataset):
         """
         Trains the model.
         """
-        "*** YOUR CODE HERE ***"
+        learning_rate = 0.01
+        count = 0
+        
+        while True:
+            for x, y in dataset.iterate_once(10):  
+                loss = self.get_loss(x, y)
+                count += 1
+                # Compute gradients
+                gradients = nn.gradients([self.W1, self.b1, self.W2, self.b2], loss)
+                
+                # Update parameters
+                self.W1.update(-learning_rate, gradients[0])
+                self.b1.update(-learning_rate, gradients[1])
+                self.W2.update(-learning_rate, gradients[2])
+                self.b2.update(-learning_rate, gradients[3])
+            
+            # Check the loss on the entire dataset to decide when to stop training
+            total_loss = 0
+            for x, y in dataset.iterate_once(1):
+                total_loss += nn.as_scalar(self.get_loss(x, y))
+            print("Total loss:", total_loss)
+            
+            #when to stop
+            if total_loss/count < learning_rate:
+                break
+       
 
 class DigitClassificationModel(object):
     """
@@ -128,7 +169,9 @@ class DigitClassificationModel(object):
             y: a node with shape (batch_size x 10)
         Returns: a loss node
         """
-        "*** YOUR CODE HERE ***"
+        prediction = self.run(x)
+        return nn.SoftmaxLoss(prediction, y)
+
 
     def train_model(self, dataset):
         """
